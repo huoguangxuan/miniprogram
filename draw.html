@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    
+    <!-- <script src="./abc.js"></script> -->
+    <title>抽奖</title>
+    <style>
+        #prizeBox {
+            display: flex;
+            list-style:none;
+            flex-wrap: wrap;
+            width: 250px;
+        }
+        #prizeBox li {
+            width:60px;
+            height:60px;
+            padding:3px;
+            margin: 5px;
+            border:1px solid #ddd;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #prizeBox li:nth-child(5) {
+            background-color: chocolate;
+            opacity: .7;
+        }
+        #prizeBox li:nth-child(5):hover {
+            background-color: chocolate;
+            opacity: .8;
+        }
+        #prizeBox li:nth-child(5):active {
+            background-color: chocolate;
+            opacity: 1;
+        }
+        
+        #prizeBox li.active{
+            background: orangered;
+        }
+    </style>
+    <script>
+        function InitDraw(_selfs,_customers,prizes){
+            this.prizes= prizes
+            this.lukeyPeople = {}
+            this.drawPerson=null
+            this.drawTimes=0
+            this._selfs=_selfs
+            this._customers = _customers
+            return ()=>{
+                let _randomIndex
+                if(this.drawTimes<10){
+                    _randomIndex=Math.floor(Math.random()*(this._selfs.length-1))
+                    this.drawPerson = this._selfs[_randomIndex]  
+                }else {
+                    _randomIndex=Math.floor(Math.random()*(this._customers.length-1))
+                    this.drawPerson = this._customers[_randomIndex]
+                }
+                const exist = this.lukeyPeople[`${this.drawPerson}`] && this.lukeyPeople[`${this.drawPerson}`]!='谢谢参与'
+                if(exist) {
+                    console.log(`尊敬的用户${this.drawPerson}，您的抽奖次数已用完谢谢参与！`)
+                    // console.log('抽奖人：',this.drawPerson)
+                    return
+                }
+                let prizeIndex =null  // 0-3随机
+                if(this.drawTimes<10){
+                    // const prizes = ['iphone14','谢谢参与','pencil','谢谢参与','20元','谢谢参与','1元','Vip月卡']
+                    const prizeIndexs=[]
+                    prizes.map((m,i)=>{
+                        if(m!='谢谢参与')
+                        prizeIndexs.push(i) // [0,2,4,5,6]
+                    })
+                    prizeIndex =  prizeIndexs[Math.floor(Math.random()*prizeIndexs.length)]
+                }else{
+                    prizeIndex = Math.floor(Math.random()*(this.prizes.length))
+                }
+               
+                this.lukeyPeople[`${this.drawPerson}`]=prizes[prizeIndex]
+                let drawInfo =''
+                if(prizes[prizeIndex]!='谢谢参与'){
+                    drawInfo = `恭喜用户${this.drawPerson}:抽中${prizes[prizeIndex]}大奖`
+                    // console.log(drawInfo)
+                    if(this.drawTimes>9){
+                        this._customers.splice(_randomIndex,1)
+                    } else {
+                        this._selfs.splice(_randomIndex,1)
+                    }
+                }else{
+                    drawInfo = `用户${this.drawPerson}:太遗憾了，下次再来试试手气！`
+                    // console.log(drawInfo)
+                }
+                this.drawTimes++
+                if(this._customers.length<1) {
+                    if(window.testTimer) clearInterval(window.testTimer)
+                    drawInfo = '抽奖结束啦'
+                    alert(drawInfo)
+                }
+                // console.log(this.lukeyPeople)
+                return {
+                    drawPerson:this.drawPerson,
+                    drawTimes:this.drawTimes,
+                    lukeyPeople:this.lukeyPeople,
+                    drawInfo,
+                    prizes,
+                    prizeIndex,
+                    isEnd:this._customers.length<1
+                }
+            }
+        }
+    </script>
+</head>
+<body style="margin:20px">
+    <div style="display: flex;justify-content: space-around;">
+        <div>
+            <ul id="prizeBox">
+                <li class="item">iphone14</li>
+                <li class="item">谢谢参与</li>
+                <li class="item">pencil</li>
+                <li class="item">谢谢参与</li>
+                <li class="item" id="start" style="color:#fff">抽奖</li>
+                <li class="item">谢谢参与</li>
+                <li class="item">谢谢参与</li>
+                <li class="item">1元</li>
+                <li class="item">20元</li>
+            </ul>
+            
+            <div id="drawScrollBox" style="height:200px;width:500px;overflow-y:auto;background-color: #f2f2f2;margin-top: 20px;">
+                <div id="drawInfoBox"></div>
+            </div>
+        </div>
+        <div  style="border-right:1px solid #ddd"></div>
+        <div>
+            <button id="startTest">点击模拟抽奖</button>
+            <div id="testDrawScrollBox" style="height:500px;width:500px;overflow-y:auto;background-color: #f2f2f2;margin-top: 20px;">
+                <div id="testDrawInfoBox"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        var selfs=[], customers=[]// 固定10人 与 // 剩余190人
+        var prizes = ['iphone14','谢谢参与','pencil','谢谢参与','20元','谢谢参与','1元','Vip月卡']
+        for(let i=0;i<200;i++){
+            i<10?selfs.push(i):''
+            i>9?customers.push(i):''
+        }
+        var myDraw = new InitDraw(selfs,customers,prizes)
+        var prizeArr =[0,1,2,5,8,7,6,3],i=0,count=0,timer=null
+        const prizeBox = document.getElementById('prizeBox')
+        const start = document.getElementById('start')
+        
+        const drawScrollBox = document.getElementById('drawScrollBox')
+        const drawInfoBox = document.getElementById('drawInfoBox')
+        const liDoms=[]
+        prizeBox.childNodes.forEach((item,index)=>{
+            if(item.className=="item"){
+                liDoms.push(item)
+            }
+        })
+        prizeArr.forEach((item,i)=>{
+            liDoms[item].innerHTML=prizes[i]
+            liDoms[4].innerHTML='抽奖'
+        })
+        let infoStr=''
+        let priceStr=''
+        
+        let random=0
+        let preIndex=0
+        const  drawstart = function(){
+         start.onclick=null
+         const {drawInfo,prizeIndex}=myDraw()
+         // 选中
+         random = 8*3 + (preIndex?8-preIndex+prizeIndex:prizeIndex)
+         preIndex = prizeIndex
+         infoStr+=`<p>${drawInfo}</p>`
+         timer = setInterval(function () {
+                draw(random,prizeIndex);
+            }, 100)
+            setTimeout(()=>{
+                drawInfoBox.innerHTML = infoStr   
+                drawScrollBox.scrollTo(0,drawInfoBox.clientHeight)
+            },100*random+100)
+        }
+         // 旋转变色
+        let draw = (random,prizeIndex)=>{
+            liDoms.forEach((item,j)=>{
+                item.style.background ='white'
+            })
+            i++;
+            if(i==prizeArr.length){
+                i=0
+            }
+            liDoms[prizeArr[i]].style.background='red'
+            liDoms[4].style.background='chocolate'
+            count++
+            if(random==count){
+                count=0
+                clearInterval(timer);
+                start.onclick= drawstart
+            }
+            
+        }
+        start.onclick= drawstart
+    </script>
+    <!-- 测试 -->
+    <script>
+        const testDraw = new InitDraw([...selfs],[...customers],prizes) // 注意引用类型参数地址指向问题
+        const startTest = document.getElementById('startTest')
+        const testDrawScrollBox = document.getElementById('testDrawScrollBox')
+        const testDrawInfoBox = document.getElementById('testDrawInfoBox')
+        let testInfoStr=''
+        
+        startTest.onclick = function(){
+            window.testTimer = setInterval(()=>{
+                const testDrawData =testDraw()
+                testInfoStr+=`<p>${testDrawData.drawInfo}</p>`
+                if(testDrawData.isEnd){
+                    testInfoStr+=`<p>中奖人员：${Object.keys(testDrawData.lukeyPeople).join(',')}</p>`
+                    testInfoStr+=`<p>共计：${Object.keys(testDrawData.lukeyPeople).length}人</p>`
+                } 
+                testDrawInfoBox.innerHTML = testInfoStr   
+                testDrawScrollBox.scrollTo(0,testDrawInfoBox.clientHeight)
+            },100)
+        }
+    </script>
+</body>
+
+</html>
